@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "pytest-unused-fixtures"
+version = "0.1.0"
+description = "A pytest plugin to list unused fixtures after a test run."
+authors = ["Mikuláš Poul <mikulaspoul@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+packages = [{include = "pytest_unused_fixtures"}]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Topic :: Software Development :: Testing",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Framework :: Pytest",
+]
+include = ["LICENSE"]
+
+[tool.poetry.plugins."pytest11"]
+pytest-unused-fixtures = "pytest_unused_fixtures"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
