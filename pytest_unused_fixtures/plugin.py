@@ -39,16 +39,12 @@ class PytestUnusedFixturesPlugin:
         seen: set[tuple[str, str]] = set()
 
         for fixturedef in fixtures:
-            if not fixturedef:
-                continue
             loc = getlocation(fixturedef.func, str(curdir))
             if (fixturedef.argname, loc) in seen:
                 continue
             seen.add((fixturedef.argname, loc))
             fixture_path = _pretty_fixture_path(fixturedef.func)
 
-            if any(fixture_path.startswith(x) for x in (self.ignore_paths or [])):
-                continue
             available.append(
                 (
                     fixturedef.func.__module__,
@@ -82,5 +78,17 @@ class PytestUnusedFixturesPlugin:
         """Add the fixture time report."""
         fullwidth = config.get_terminal_writer().fullwidth
 
-        terminalreporter.write_sep(sep="=", title="UNUSED FIXTURES", fullwidth=fullwidth)
-        self._write_fixtures(config, terminalreporter, self.available_fixtures - self.used_fixtures)
+        unused_fixtures = self.available_fixtures - self.used_fixtures
+        non_ignored_unused_fixtures = []
+        for fixturedef in unused_fixtures:
+            if fixturedef is None:
+                continue
+            fixture_path = _pretty_fixture_path(fixturedef.func)
+
+            if any(fixture_path.startswith(x) for x in (self.ignore_paths or [])):
+                continue
+            non_ignored_unused_fixtures.append(fixturedef)
+
+        if non_ignored_unused_fixtures:
+            terminalreporter.write_sep(sep="=", title="UNUSED FIXTURES", fullwidth=fullwidth)
+            self._write_fixtures(config, terminalreporter, non_ignored_unused_fixtures)
