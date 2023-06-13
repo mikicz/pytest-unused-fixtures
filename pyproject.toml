@@ -26,6 +26,73 @@ pytest-unused-fixtures = "pytest_unused_fixtures"
 [tool.poetry.dependencies]
 python = "^3.10"
 
+[tool.poetry.group.dev.dependencies]
+black = "^23.3.0"
+ruff = "^0.0.272"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 120
+target_version = ['py310']
+include = '\.pyi?$'
+exclude = '''
+(
+  /(
+      \.git         # exclude a few common directories in the
+    | venv          # root of the project
+  )/
+)
+'''
+
+
+[tool.ruff]
+select = [
+    # https://github.com/charliermarsh/ruff#pyflakes-f
+    "F",
+    # https://github.com/charliermarsh/ruff#pycodestyle-e-w
+    "E",
+    "W",
+    # https://github.com/charliermarsh/ruff#isort-i
+    "I",
+    # https://github.com/charliermarsh/ruff#pep8-naming-n
+    "N",
+    # https://github.com/charliermarsh/ruff#pyupgrade-up
+    "UP",
+    # https://github.com/charliermarsh/ruff#flake8-bugbear-b
+    "B",
+    # https://github.com/charliermarsh/ruff#flake8-comprehensions-c4
+    "C4",
+    # https://github.com/charliermarsh/ruff#flake8-debugger-t10
+    "T10",
+    # https://github.com/charliermarsh/ruff#flake8-pie-pie
+    "PIE",
+    # https://github.com/charliermarsh/ruff#flake8-pytest-style-pt
+    "PT",
+    # https://github.com/charliermarsh/ruff#flake8-return-ret
+    "RET",
+    # https://github.com/charliermarsh/ruff#flake8-simplify-sim
+    "SIM",
+]
+
+line-length = 120
+target-version = "py310"
+
+# Never enforce...
+ignore = [
+    "E501",   # line length violations
+    "PT004",  # missing-fixture-name-underscore
+    "SIM108", # use-ternary-operator
+    "RET505", # superfluous-else-return
+    "RET506", # superfluous-else-raise
+    "RET507", # superfluous-else-continue
+    "RET508", # superfluous-else-break
+    "B027",   # empty-method-without-abstract-decorator
+]
+
+[tool.ruff.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false
+parametrize-names-type = "list"
