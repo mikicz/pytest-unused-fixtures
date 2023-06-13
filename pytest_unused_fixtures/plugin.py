@@ -1,3 +1,5 @@
+import functools
+import inspect
 import itertools
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, NoReturn
@@ -13,11 +15,37 @@ if TYPE_CHECKING:
     from _pytest.terminal import TerminalReporter
 
 
+def get_class_that_defined_method(meth):
+    """
+    Thank you very much https://stackoverflow.com/a/25959545/3697325
+    """
+    if isinstance(meth, functools.partial):
+        return get_class_that_defined_method(meth.func)
+    if inspect.ismethod(meth) or (
+        inspect.isbuiltin(meth)
+        and getattr(meth, "__self__", None) is not None
+        and getattr(meth.__self__, "__class__", None)
+    ):
+        for cls in inspect.getmro(meth.__self__.__class__):
+            if meth.__name__ in cls.__dict__:
+                return cls
+        meth = getattr(meth, "__func__", meth)  # fallback to __qualname__ parsing
+    if inspect.isfunction(meth):
+        cls = getattr(
+            inspect.getmodule(meth),
+            meth.__qualname__.split(".<locals>", 1)[0].rsplit(".", 1)[0],
+            None,
+        )
+        if isinstance(cls, type):
+            return cls
+    return getattr(meth, "__objclass__", None)  # handle special descriptor objects
+
+
 class PytestUnusedFixturesPlugin:
     def __init__(self, ignore_paths=None):
         self.ignore_paths: list[str] | None = ignore_paths
         self.used_fixtures = set()
-        self.available_fixtures = None
+        self.available_fixtures: None | set["FixtureDef"] = None
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_fixture_setup(self, fixturedef: "FixtureDef", request: "SubRequest") -> Any | None:
@@ -78,7 +106,10 @@ class PytestUnusedFixturesPlugin:
         """Add the fixture time report."""
         fullwidth = config.get_terminal_writer().fullwidth
 
+        # do a simple set operation to get the unused fixtures
         unused_fixtures = self.available_fixtures - self.used_fixtures
+
+        # ignore unused fixtures from ignored paths
         non_ignored_unused_fixtures = []
         for fixturedef in unused_fixtures:
             if fixturedef is None:
@@ -88,7 +119,25 @@ class PytestUnusedFixturesPlugin:
             if any(fixture_path.startswith(x) for x in (self.ignore_paths or [])):
                 continue
             non_ignored_unused_fixtures.append(fixturedef)
+        unused_fixtures = non_ignored_unused_fixtures
 
-        if non_ignored_unused_fixtures:
+        # handle fixtures in class-inheritance
+        unused_fixtures_without_class_inheritance = []
+        concrete_used_methods = set()
+        for fixturedef in self.used_fixtures:
+            cls = get_class_that_defined_method(fixturedef.func)
+            if cls is not None:
+                concrete_used_methods.add(getattr(cls, fixturedef.argname))
+
+        for fixturedef in unused_fixtures:
+            # can't find base class -> must be unused
+            cls = get_class_that_defined_method(fixturedef.func)
+            if cls is None or getattr(cls, fixturedef.argname) not in concrete_used_methods:
+                unused_fixtures_without_class_inheritance.append(fixturedef)
+
+        unused_fixtures = unused_fixtures_without_class_inheritance
+
+        # print fixtures
+        if unused_fixtures:
             terminalreporter.write_sep(sep="=", title="UNUSED FIXTURES", fullwidth=fullwidth)
-            self._write_fixtures(config, terminalreporter, non_ignored_unused_fixtures)
+            self._write_fixtures(config, terminalreporter, unused_fixtures)
