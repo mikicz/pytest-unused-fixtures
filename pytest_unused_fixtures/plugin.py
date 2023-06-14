@@ -1,11 +1,8 @@
-import functools
-import inspect
+import dataclasses
 import itertools
-from pathlib import Path
 from typing import TYPE_CHECKING, Any, NoReturn
 
 import pytest
-from _pytest.compat import getlocation
 from _pytest.python import _pretty_fixture_path
 
 if TYPE_CHECKING:
@@ -15,86 +12,68 @@ if TYPE_CHECKING:
     from _pytest.terminal import TerminalReporter
 
 
-def get_class_that_defined_method(meth):
-    """
-    Thank you very much https://stackoverflow.com/a/25959545/3697325
-    """
-    if isinstance(meth, functools.partial):
-        return get_class_that_defined_method(meth.func)
-    if inspect.ismethod(meth) or (
-        inspect.isbuiltin(meth)
-        and getattr(meth, "__self__", None) is not None
-        and getattr(meth.__self__, "__class__", None)
-    ):
-        for cls in inspect.getmro(meth.__self__.__class__):
-            if meth.__name__ in cls.__dict__:
-                return cls
-        meth = getattr(meth, "__func__", meth)  # fallback to __qualname__ parsing
-    if inspect.isfunction(meth):
-        cls = getattr(
-            inspect.getmodule(meth),
-            meth.__qualname__.split(".<locals>", 1)[0].rsplit(".", 1)[0],
-            None,
-        )
-        if isinstance(cls, type):
-            return cls
-    return getattr(meth, "__objclass__", None)  # handle special descriptor objects
+@dataclasses.dataclass(frozen=True, eq=True)
+class FixtureInfo:
+    module: str
+    fixture_path: str
+    argname: str
+    scope: str
+
+    def __lt__(self, other):
+        return (self.module, self.fixture_path, self.argname) < (other.module, other.fixture_path, other.argname)
 
 
 class PytestUnusedFixturesPlugin:
     def __init__(self, ignore_paths=None):
         self.ignore_paths: list[str] | None = ignore_paths
-        self.used_fixtures = set()
-        self.available_fixtures: None | set["FixtureDef"] = None
+        self.used_fixtures: set[FixtureInfo] = set()
+        self.available_fixtures: None | set[FixtureInfo] = None
+
+    def get_fixture_info(self, fixturedef: "FixtureDef") -> FixtureInfo:
+        return FixtureInfo(
+            module=fixturedef.func.__module__,
+            fixture_path=_pretty_fixture_path(fixturedef.func),
+            argname=fixturedef.argname,
+            scope=fixturedef.scope,
+        )
 
     @pytest.hookimpl(hookwrapper=True)
     def pytest_fixture_setup(self, fixturedef: "FixtureDef", request: "SubRequest") -> Any | None:
-        self.used_fixtures.add(fixturedef)
+        self.used_fixtures.add(self.get_fixture_info(fixturedef))
 
         yield
 
-    def pytest_sessionfinish(self, session: "Session", exitstatus):
-        fm = session._fixturemanager
-        available_fixtures = set(itertools.chain(*fm._arg2fixturedefs.values()))
-        self.available_fixtures = available_fixtures
+    def pytest_collection_finish(self, session: "Session") -> None:
+        self.available_fixtures = {
+            self.get_fixture_info(x) for x in itertools.chain(*session._fixturemanager._arg2fixturedefs.values())
+        }
 
-    def _write_fixtures(self, config: "Config", terminalreporter: "TerminalReporter", fixtures: set):
+    def _write_fixtures(self, config: "Config", terminalreporter: "TerminalReporter", fixtures: set[FixtureInfo]):
         verbose = config.getvalue("verbose")
         tw = terminalreporter
-        curdir = Path.cwd()
 
-        available = []
+        available: list[FixtureInfo] = []
         seen: set[tuple[str, str]] = set()
 
-        for fixturedef in fixtures:
-            loc = getlocation(fixturedef.func, str(curdir))
-            if (fixturedef.argname, loc) in seen:
+        fixture: FixtureInfo
+        for fixture in fixtures:
+            if (fixture.argname, fixture.fixture_path) in seen:
                 continue
-            seen.add((fixturedef.argname, loc))
-            fixture_path = _pretty_fixture_path(fixturedef.func)
-
-            available.append(
-                (
-                    fixturedef.func.__module__,
-                    len(fixturedef.baseid),
-                    fixture_path,
-                    fixturedef.argname,
-                    fixturedef,
-                )
-            )
+            seen.add((fixture.argname, fixture.fixture_path))
+            available.append(fixture)
 
         available.sort()
-        currentmodule = None
-        for module, _baseid, prettypath, argname, fixturedef in available:
-            if currentmodule != module and not module.startswith("_pytest."):
-                tw.write_sep("-", f"fixtures defined from {module}")
-                currentmodule = module
-            if verbose <= 0 and argname.startswith("_"):
+        current_module = None
+        for fixture in available:
+            if current_module != fixture.module and not fixture.module.startswith("_pytest."):
+                tw.write_sep("-", f"fixtures defined from {fixture.module}")
+                current_module = fixture.module
+            if verbose <= 0 and fixture.argname.startswith("_"):
                 continue
-            tw.write(f"{argname}", green=True)
-            if fixturedef.scope != "function":
-                tw.write(" [%s scope]" % fixturedef.scope, cyan=True)
-            tw.write(f" -- {prettypath}", yellow=True)
+            tw.write(f"{fixture.argname}", green=True)
+            if fixture.scope != "function":
+                tw.write(" [%s scope]" % fixture.scope, cyan=True)
+            tw.write(f" -- {fixture.fixture_path}", yellow=True)
             tw.write("\n")
 
     def pytest_terminal_summary(
@@ -110,32 +89,13 @@ class PytestUnusedFixturesPlugin:
         unused_fixtures = self.available_fixtures - self.used_fixtures
 
         # ignore unused fixtures from ignored paths
+        fixture: FixtureInfo
         non_ignored_unused_fixtures = []
-        for fixturedef in unused_fixtures:
-            if fixturedef is None:
+        for fixture in unused_fixtures:
+            if any(fixture.fixture_path.startswith(x) for x in (self.ignore_paths or [])):
                 continue
-            fixture_path = _pretty_fixture_path(fixturedef.func)
-
-            if any(fixture_path.startswith(x) for x in (self.ignore_paths or [])):
-                continue
-            non_ignored_unused_fixtures.append(fixturedef)
+            non_ignored_unused_fixtures.append(fixture)
         unused_fixtures = non_ignored_unused_fixtures
-
-        # handle fixtures in class-inheritance
-        unused_fixtures_without_class_inheritance = []
-        concrete_used_methods = set()
-        for fixturedef in self.used_fixtures:
-            cls = get_class_that_defined_method(fixturedef.func)
-            if cls is not None:
-                concrete_used_methods.add(getattr(cls, fixturedef.argname))
-
-        for fixturedef in unused_fixtures:
-            # can't find base class -> must be unused
-            cls = get_class_that_defined_method(fixturedef.func)
-            if cls is None or getattr(cls, fixturedef.argname) not in concrete_used_methods:
-                unused_fixtures_without_class_inheritance.append(fixturedef)
-
-        unused_fixtures = unused_fixtures_without_class_inheritance
 
         # print fixtures
         if unused_fixtures:

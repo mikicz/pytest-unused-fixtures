@@ -25,4 +25,11 @@ def pytest_configure(config: "Config") -> NoReturn:
     from pytest_unused_fixtures.plugin import PytestUnusedFixturesPlugin
 
     pluginmanager = config.pluginmanager
-    pluginmanager.register(PytestUnusedFixturesPlugin(config.getoption("--unused-fixtures-ignore-path")))
+
+    plugin = PytestUnusedFixturesPlugin
+    if pluginmanager.hasplugin("xdist"):
+        from pytest_unused_fixtures.xdist import PytestUnusedFixturesPluginXdist
+
+        plugin = PytestUnusedFixturesPluginXdist
+
+    pluginmanager.register(plugin(config.getoption("--unused-fixtures-ignore-path")))
