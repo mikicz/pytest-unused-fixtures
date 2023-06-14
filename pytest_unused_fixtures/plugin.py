@@ -1,9 +1,12 @@
 import dataclasses
 import itertools
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, NoReturn
 
 import pytest
-from _pytest.python import _pretty_fixture_path
+from _pytest.compat import getlocation
+from _pytest.pathlib import bestrelpath
+from _pytest.python import _PYTEST_DIR
 
 if TYPE_CHECKING:
     from _pytest.config import Config, ExitCode
@@ -15,12 +18,22 @@ if TYPE_CHECKING:
 @dataclasses.dataclass(frozen=True, eq=True)
 class FixtureInfo:
     module: str
-    fixture_path: str
     argname: str
     scope: str
+    location: str
 
     def __lt__(self, other):
-        return (self.module, self.fixture_path, self.argname) < (other.module, other.fixture_path, other.argname)
+        return (self.module, self.location, self.argname) < (other.module, other.location, other.argname)
+
+    @property
+    def pretty_path(self):
+        cwd = Path.cwd()
+        loc = Path(self.location)
+        prefix = Path("...", "_pytest")
+        try:
+            return str(prefix / loc.relative_to(_PYTEST_DIR))
+        except ValueError:
+            return bestrelpath(cwd, loc)
 
 
 class PytestUnusedFixturesPlugin:
@@ -28,13 +41,14 @@ class PytestUnusedFixturesPlugin:
         self.ignore_paths: list[str] | None = ignore_paths
         self.used_fixtures: set[FixtureInfo] = set()
         self.available_fixtures: None | set[FixtureInfo] = None
+        self.curdir = Path().cwd()
 
     def get_fixture_info(self, fixturedef: "FixtureDef") -> FixtureInfo:
         return FixtureInfo(
             module=fixturedef.func.__module__,
-            fixture_path=_pretty_fixture_path(fixturedef.func),
             argname=fixturedef.argname,
             scope=fixturedef.scope,
+            location=getlocation(fixturedef.func, self.curdir),
         )
 
     @pytest.hookimpl(hookwrapper=True)
@@ -57,9 +71,9 @@ class PytestUnusedFixturesPlugin:
 
         fixture: FixtureInfo
         for fixture in fixtures:
-            if (fixture.argname, fixture.fixture_path) in seen:
+            if (fixture.argname, fixture.location) in seen:
                 continue
-            seen.add((fixture.argname, fixture.fixture_path))
+            seen.add((fixture.argname, fixture.location))
             available.append(fixture)
 
         available.sort()
@@ -73,7 +87,7 @@ class PytestUnusedFixturesPlugin:
             tw.write(f"{fixture.argname}", green=True)
             if fixture.scope != "function":
                 tw.write(" [%s scope]" % fixture.scope, cyan=True)
-            tw.write(f" -- {fixture.fixture_path}", yellow=True)
+            tw.write(f" -- {fixture.pretty_path}", yellow=True)
             tw.write("\n")
 
     def pytest_terminal_summary(
@@ -92,7 +106,7 @@ class PytestUnusedFixturesPlugin:
         fixture: FixtureInfo
         non_ignored_unused_fixtures = []
         for fixture in unused_fixtures:
-            if any(fixture.fixture_path.startswith(x) for x in (self.ignore_paths or [])):
+            if any(fixture.pretty_path.startswith(x) for x in (self.ignore_paths or [])):
                 continue
             non_ignored_unused_fixtures.append(fixture)
         unused_fixtures = non_ignored_unused_fixtures
