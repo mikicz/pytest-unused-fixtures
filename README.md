@@ -18,6 +18,20 @@ After installing the package, the plugin is enabled by adding the switch `--unus
 
 Paths of fixtures can be ignored with one or multiple `--unused-fixtures-ignore-path` arguments. For example `--unused-fixtures-ignore-path=venv` will ignore all fixtures defined in the `venv` folder.
 
+### Ignoring specific fixtures from report
+
+Sometimes there will be fixture which are unused on purpose, for example when used in tests which are skipped by default. A decorator is provided for ignoring fixtures from the unused report. See the example for usage:
+
+```python
+import pytest
+from pytest_unused_fixtures import ignore_unused_fixture
+
+@pytest.fixture
+@ignore_unused_fixture
+def ignored_fixture():
+    pass
+```
+
 ## Development
 
 [Poetry](https://python-poetry.org/) (dependencies) and [pre-commit](https://pre-commit.com/) (coding standards) are required for development. Ther are some tests, obviously written in [pytest](https://pytest.org/).

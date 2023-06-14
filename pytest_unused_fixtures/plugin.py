@@ -59,7 +59,10 @@ class PytestUnusedFixturesPlugin:
 
     def pytest_collection_finish(self, session: "Session") -> None:
         self.available_fixtures = {
-            self.get_fixture_info(x) for x in itertools.chain(*session._fixturemanager._arg2fixturedefs.values())
+            self.get_fixture_info(x)
+            for x in itertools.chain(*session._fixturemanager._arg2fixturedefs.values())
+            # if fixture is not in available fixtures, it won't be marked as unused
+            if not hasattr(x.func, "ignore_unused_fixture")
         }
 
     def _write_fixtures(self, config: "Config", terminalreporter: "TerminalReporter", fixtures: set[FixtureInfo]):
