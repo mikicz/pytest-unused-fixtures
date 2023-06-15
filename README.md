@@ -34,7 +34,7 @@ def ignored_fixture():
 
 ## Development
 
-[Poetry](https://python-poetry.org/) (dependencies) and [pre-commit](https://pre-commit.com/) (coding standards) are required for development. Ther are some tests, obviously written in [pytest](https://pytest.org/).
+[Poetry](https://python-poetry.org/) (dependencies) and [pre-commit](https://pre-commit.com/) (coding standards) are required for development. There are some tests, obviously written in [pytest](https://pytest.org/).
 
 ```shell
 $ poetry install
@@ -50,6 +50,15 @@ Many thanks to
  - [pytest-durations](https://github.com/blake-r/pytest-durations) for inspirations in parts of the implementation
 
 ## Changelog
+
+### 0.1.2 (Jun 15, 2023)
+
+* Fix typo, add repository to PyPI
+
+### 0.1.1 (Jun 14, 2023)
+
+* Fix location handling
+* Add decorator for ignoring fixtures from report
 
 ### 0.1.0 (Jun 14, 2023)
 
