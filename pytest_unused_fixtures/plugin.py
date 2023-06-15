@@ -5,8 +5,6 @@ from typing import TYPE_CHECKING, Any, NoReturn
 
 import pytest
 from _pytest.compat import getlocation
-from _pytest.pathlib import bestrelpath
-from _pytest.python import _PYTEST_DIR
 
 if TYPE_CHECKING:
     from _pytest.config import Config, ExitCode
@@ -26,19 +24,21 @@ class FixtureInfo:
         return (self.module, self.location, self.argname) < (other.module, other.location, other.argname)
 
     @property
+    def location_path(self):
+        return Path(self.location.split(":")[0]).resolve()
+
+    @property
     def pretty_path(self):
-        cwd = Path.cwd()
-        loc = Path(self.location)
-        prefix = Path("...", "_pytest")
+        cwd = Path.cwd().resolve()
         try:
-            return str(prefix / loc.relative_to(_PYTEST_DIR))
+            return self.location_path.relative_to(cwd)
         except ValueError:
-            return bestrelpath(cwd, loc)
+            return self.location_path
 
 
 class PytestUnusedFixturesPlugin:
-    def __init__(self, ignore_paths=None):
-        self.ignore_paths: list[str] | None = ignore_paths
+    def __init__(self, ignore_paths: list[str | Path] | None = None):
+        self.ignore_paths: list[Path] = [Path(x).resolve() for x in (ignore_paths or [])]
         self.used_fixtures: set[FixtureInfo] = set()
         self.available_fixtures: None | set[FixtureInfo] = None
         self.curdir = Path().cwd()
@@ -109,7 +109,7 @@ class PytestUnusedFixturesPlugin:
         fixture: FixtureInfo
         non_ignored_unused_fixtures = []
         for fixture in unused_fixtures:
-            if any(fixture.pretty_path.startswith(x) for x in (self.ignore_paths or [])):
+            if any(fixture.location_path.is_relative_to(x) or fixture.location_path == x for x in self.ignore_paths):
                 continue
             non_ignored_unused_fixtures.append(fixture)
         unused_fixtures = non_ignored_unused_fixtures

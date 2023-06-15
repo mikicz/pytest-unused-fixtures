@@ -54,6 +54,7 @@ Many thanks to
 ### 0.1.2 (Jun 15, 2023)
 
 * Fix typo, add repository to PyPI
+* Update location handling with respect to showing fixture locations and ignoring paths
 
 ### 0.1.1 (Jun 14, 2023)
 

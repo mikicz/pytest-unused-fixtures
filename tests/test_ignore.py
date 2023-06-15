@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 
@@ -29,7 +31,9 @@ def sample_testfile(pytester):
 
 def test_default(pytester, sample_testfile):
     """Zero durations should disable plugin completely."""
-    result = pytester.runpytest("--unused-fixtures", "--unused-fixtures-ignore-path", ".../")
+    result = pytester.runpytest(
+        "--unused-fixtures", "--unused-fixtures-ignore-path", Path(__file__).parents[1] / "venv"
+    )
     result.assert_outcomes(passed=1)
     result.stdout.no_fnmatch_line("*duration top*")
     result.stdout.fnmatch_lines(
