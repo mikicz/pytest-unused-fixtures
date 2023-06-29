@@ -32,7 +32,11 @@ def sample_testfile(pytester):
 def test_default(pytester, sample_testfile):
     """Zero durations should disable plugin completely."""
     result = pytester.runpytest(
-        "--unused-fixtures", "--unused-fixtures-ignore-path", Path(__file__).parents[1] / "venv"
+        "--unused-fixtures",
+        "--unused-fixtures-ignore-path",
+        Path(__file__).parents[1] / "venv",
+        "--unused-fixtures-ignore-path",
+        Path(__file__).parents[1] / ".tox",
     )
     result.assert_outcomes(passed=1)
     result.stdout.no_fnmatch_line("*duration top*")
@@ -40,7 +44,7 @@ def test_default(pytester, sample_testfile):
         [
             "*UNUSED FIXTURES*",
             "*fixtures defined from test_default*",
-            "*fixture_c -- test_default.py:15*",
+            "*fixture_c -- test_default.py:14*",
         ],
         consecutive=True,
     )

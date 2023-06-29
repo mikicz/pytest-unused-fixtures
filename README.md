@@ -51,6 +51,11 @@ Many thanks to
 
 ## Changelog
 
+### 0.1.3 (Jun 30, 2023)
+
+* Print line number
+* Support Python 3.9
+
 ### 0.1.2 (Jun 15, 2023)
 
 * Fix typo, add repository to PyPI

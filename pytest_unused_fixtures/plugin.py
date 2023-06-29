@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import dataclasses
 import itertools
 from pathlib import Path
@@ -19,6 +21,7 @@ class FixtureInfo:
     argname: str
     scope: str
     location: str
+    lineno: int
 
     def __lt__(self, other):
         return (self.module, self.location, self.argname) < (other.module, other.location, other.argname)
@@ -43,21 +46,22 @@ class PytestUnusedFixturesPlugin:
         self.available_fixtures: None | set[FixtureInfo] = None
         self.curdir = Path().cwd()
 
-    def get_fixture_info(self, fixturedef: "FixtureDef") -> FixtureInfo:
+    def get_fixture_info(self, fixturedef: FixtureDef) -> FixtureInfo:
         return FixtureInfo(
             module=fixturedef.func.__module__,
             argname=fixturedef.argname,
             scope=fixturedef.scope,
             location=getlocation(fixturedef.func, self.curdir),
+            lineno=fixturedef.func.__code__.co_firstlineno,
         )
 
     @pytest.hookimpl(hookwrapper=True)
-    def pytest_fixture_setup(self, fixturedef: "FixtureDef", request: "SubRequest") -> Any | None:
+    def pytest_fixture_setup(self, fixturedef: FixtureDef, request: SubRequest) -> Any | None:
         self.used_fixtures.add(self.get_fixture_info(fixturedef))
 
         yield
 
-    def pytest_collection_finish(self, session: "Session") -> None:
+    def pytest_collection_finish(self, session: Session) -> None:
         self.available_fixtures = {
             self.get_fixture_info(x)
             for x in itertools.chain(*session._fixturemanager._arg2fixturedefs.values())
@@ -65,7 +69,7 @@ class PytestUnusedFixturesPlugin:
             if not hasattr(x.func, "ignore_unused_fixture")
         }
 
-    def _write_fixtures(self, config: "Config", terminalreporter: "TerminalReporter", fixtures: set[FixtureInfo]):
+    def _write_fixtures(self, config: Config, terminalreporter: TerminalReporter, fixtures: set[FixtureInfo]):
         verbose = config.getvalue("verbose")
         tw = terminalreporter
 
@@ -90,14 +94,14 @@ class PytestUnusedFixturesPlugin:
             tw.write(f"{fixture.argname}", green=True)
             if fixture.scope != "function":
                 tw.write(" [%s scope]" % fixture.scope, cyan=True)
-            tw.write(f" -- {fixture.pretty_path}", yellow=True)
+            tw.write(f" -- {fixture.pretty_path}:{fixture.lineno}", yellow=True)
             tw.write("\n")
 
     def pytest_terminal_summary(
         self,
-        terminalreporter: "TerminalReporter",
-        exitstatus: "ExitCode",
-        config: "Config",
+        terminalreporter: TerminalReporter,
+        exitstatus: ExitCode,
+        config: Config,
     ) -> NoReturn:
         """Add the fixture time report."""
         fullwidth = config.get_terminal_writer().fullwidth
