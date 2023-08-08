@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pytest-unused-fixtures"
-version = "0.1.3"
+version = "0.1.4"
 description = "A pytest plugin to list unused fixtures after a test run."
 authors = ["Mikuláš Poul <mikulaspoul@gmail.com>"]
 license = "MIT"
@@ -13,6 +13,7 @@ classifiers = [
     "Topic :: Software Development :: Testing",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -30,8 +31,8 @@ python = "^3.9"
 pytest = "^7.3.2"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.3.0"
-ruff = "^0.0.272"
+black = "^23.7.0"
+ruff = "^0.0.283"
 pytest-xdist = "^3.3.1"
 
 [build-system]
@@ -40,13 +41,14 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.black]
 line-length = 120
-target_version = ['py310']
+target_version = ['py39', 'py310', 'py311', 'py312']
 include = '\.pyi?$'
 exclude = '''
 (
   /(
       \.git         # exclude a few common directories in the
-    | venv          # root of the project
+    | \.tox         # root of the project
+    | venv
   )/
 )
 '''
