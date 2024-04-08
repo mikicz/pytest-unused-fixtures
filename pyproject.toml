@@ -28,7 +28,7 @@ pytest-unused-fixtures = "pytest_unused_fixtures"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-pytest = "^7.3.2"
+pytest = ">7.3.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.7.0"
