@@ -18,6 +18,12 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> NoRe
         action="append",
         help="Ignore fixtures in PATHs from unused fixtures report.",
     )
+    group.addoption(
+        "--unused-fixtures-fail-when-present",
+        action="store_true",
+        default=False,
+        help="Exit the pytest session with a failure code if unused fixtures are found",
+    )
 
 
 def pytest_configure(config: Config) -> NoReturn:

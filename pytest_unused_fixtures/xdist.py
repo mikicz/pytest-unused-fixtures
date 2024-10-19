@@ -21,6 +21,8 @@ class PytestUnusedFixturesPluginXdist(PytestUnusedFixturesPlugin):
             workeroutput[_WORKEROUTPUT_KEY_AVAILABLE] = list(map(asdict, self.available_fixtures))
             workeroutput[_WORKEROUTPUT_KEY_USED] = list(map(asdict, self.used_fixtures))
 
+        super().pytest_sessionfinish(session, exitstatus)
+
     def pytest_testnodedown(self, node: WorkerController, error: Any | None) -> NoReturn:
         if (workeroutput := getattr(node, "workeroutput", None)) is not None:
             # add used & available fixtures from nodes
