@@ -40,11 +40,12 @@ class FixtureInfo:
 
 
 class PytestUnusedFixturesPlugin:
-    def __init__(self, ignore_paths: list[str | Path] | None = None):
+    def __init__(self, ignore_paths: list[str | Path] | None = None, context: list[str | Path] | None = None):
         self.ignore_paths: list[Path] = [Path(x).resolve() for x in (ignore_paths or [])]
         self.used_fixtures: set[FixtureInfo] = set()
         self.available_fixtures: None | set[FixtureInfo] = None
         self.curdir = Path().cwd()
+        self.context = context or []
         self._shouldfail = False
 
     def get_fixture_info(self, fixturedef: FixtureDef) -> FixtureInfo:
@@ -124,6 +125,11 @@ class PytestUnusedFixturesPlugin:
         non_ignored_unused_fixtures = set()
         for fixture in unused_fixtures:
             if any(fixture.location_path.is_relative_to(x) or fixture.location_path == x for x in self.ignore_paths):
+                continue
+            fixtures_in_context = [
+                fixture.location_path.is_relative_to(x) for x in [Path(i).resolve() for i in self.context]
+            ]
+            if fixtures_in_context and not any(fixtures_in_context):
                 continue
             non_ignored_unused_fixtures.add(fixture)
 

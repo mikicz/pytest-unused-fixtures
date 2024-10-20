@@ -24,6 +24,14 @@ def pytest_addoption(parser: Parser, pluginmanager: PytestPluginManager) -> NoRe
         default=False,
         help="Exit the pytest session with a failure code if unused fixtures are found",
     )
+    group.addoption(
+        "--unused-fixtures-context",
+        metavar="PATH",
+        type=str,
+        nargs="+",
+        default=None,
+        help="Limit the scope of which to look for unused fixtures to these directories",
+    )
 
 
 def pytest_configure(config: Config) -> NoReturn:
@@ -40,4 +48,6 @@ def pytest_configure(config: Config) -> NoReturn:
 
         plugin = PytestUnusedFixturesPluginXdist
 
-    pluginmanager.register(plugin(config.getoption("--unused-fixtures-ignore-path")))
+    paths_ignore = config.getoption("--unused-fixtures-ignore-path")
+    unused_fixture_context = config.getoption("--unused-fixtures-context")
+    pluginmanager.register(plugin(paths_ignore, unused_fixture_context))
