@@ -12,11 +12,40 @@ Running the tests is required to accurately record which fixtures are used, as p
 $ pip install pytest-unused-fixtures
 ```
 
+## Options
+
+| Option Name                           | Type             | Description                                                    |
+|---------------------------------------|------------------|----------------------------------------------------------------|
+| `--unused-fixtures`                   | switch           | Enable plugin                                                  |
+| `--unused-fixtures-ignore-path`       | string*          | Ignore paths for consideration of unused fixtures              |
+| `--unused-fixtures-context`           | array\<string\>  | Only consider fixtures missing if defined in these directories |
+| `--unused-fixtures-fail-when-present` | switch           | Fail pytest session if unused fixtures are present             |
+
+
 ## Usage
 
 After installing the package, the plugin is enabled by adding the switch `--unused-fixtures`.
 
 Paths of fixtures can be ignored with one or multiple `--unused-fixtures-ignore-path` arguments. For example `--unused-fixtures-ignore-path=venv` will ignore all fixtures defined in the `venv` folder.
+
+Alternatively, you can limit the scope in which the plugin looks for unused fixtures to a specific directory or directories. For example:
+
+**Limit scope to one directory**
+This example will only display unused fixtures that were defined in the `tests` folder
+```shell
+pytest tests --unused-fixtures --unused-fixtures-context tests
+```
+
+**Limit scope to multiple directories**
+This example will only display unused fixtures that were defined in the `directory1` and `directory2/sub-directory` folders
+```shell
+pytest tests --unused-fixtures --unused-fixtures-context directory1 directory2/sub-directory
+```
+
+**Fail test session**
+By default, when you use the `--unused-fixtures` switch, the plugin will exit with the same exit code pytest
+would have used if running without the plugin. Add the switch `--unused-fixtures-fail-when-present` and the
+pytest session will return a non-zero exit code if there are unused fixtures.
 
 ### Ignoring specific fixtures from report
 
