@@ -31,30 +31,19 @@ python = "^3.9"
 pytest = ">7.3.2"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.7.0"
-ruff = "^0.0.283"
+ruff = "^0.7.0"
 pytest-xdist = "^3.3.1"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[tool.black]
-line-length = 120
-target_version = ['py39', 'py310', 'py311', 'py312']
-include = '\.pyi?$'
-exclude = '''
-(
-  /(
-      \.git         # exclude a few common directories in the
-    | \.tox         # root of the project
-    | venv
-  )/
-)
-'''
-
-
 [tool.ruff]
+
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
 select = [
     # https://github.com/charliermarsh/ruff#pyflakes-f
     "F",
@@ -83,8 +72,7 @@ select = [
     "SIM",
 ]
 
-line-length = 120
-target-version = "py310"
+
 
 # Never enforce...
 ignore = [
@@ -98,7 +86,7 @@ ignore = [
     "B027",   # empty-method-without-abstract-decorator
 ]
 
-[tool.ruff.flake8-pytest-style]
+[tool.ruff.lint.flake8-pytest-style]
 fixture-parentheses = false
 mark-parentheses = false
 parametrize-names-type = "list"
