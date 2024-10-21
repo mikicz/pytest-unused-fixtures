@@ -93,7 +93,7 @@ class PytestUnusedFixturesPlugin:
                 continue
             tw.write(f"{fixture.argname}", green=True)
             if fixture.scope != "function":
-                tw.write(" [%s scope]" % fixture.scope, cyan=True)
+                tw.write(f" [{fixture.scope} scope]", cyan=True)
             tw.write(f" -- {fixture.pretty_path}:{fixture.lineno}", yellow=True)
             tw.write("\n")
 
