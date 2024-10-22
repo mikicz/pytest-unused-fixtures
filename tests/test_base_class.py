@@ -51,3 +51,25 @@ def test_default(pytester, sample_testfile):
         ],
         consecutive=True,
     )
+
+
+def test_option_context(pytester, sample_testfile):
+    """
+    test the option `--unused-fixtures-context`.
+    """
+    result = pytester.runpytest("--unused-fixtures", "--unused-fixtures-context", Path(__file__).parent)
+    result.assert_outcomes(passed=2)
+    result.stdout.no_fnmatch_line("*UNUSED FIXTURES*")
+
+
+def test_fail_when_present(pytester, sample_testfile):
+    result = pytester.runpytest("--unused-fixtures", "--unused-fixtures-fail-when-present")
+    result.stdout.fnmatch_lines(["*ERROR: Unused fixtures failure: total of 1 unused fixtures*"])
+    result.stdout.fnmatch_lines(
+        [
+            "*UNUSED FIXTURES*",
+            "*fixtures defined from test_fail_when_present*",
+            "*fixture_c -- test_fail_when_present.py:12*",
+        ],
+    )
+    assert result.ret == pytest.ExitCode.TESTS_FAILED

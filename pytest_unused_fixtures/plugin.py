@@ -40,11 +40,13 @@ class FixtureInfo:
 
 
 class PytestUnusedFixturesPlugin:
-    def __init__(self, ignore_paths: list[str | Path] | None = None):
+    def __init__(self, ignore_paths: list[str | Path] | None = None, context: list[str | Path] | None = None):
         self.ignore_paths: list[Path] = [Path(x).resolve() for x in (ignore_paths or [])]
         self.used_fixtures: set[FixtureInfo] = set()
         self.available_fixtures: None | set[FixtureInfo] = None
         self.curdir = Path().cwd()
+        self.context = context or []
+        self._shouldfail = False
 
     def get_fixture_info(self, fixturedef: FixtureDef) -> FixtureInfo:
         return FixtureInfo(
@@ -67,6 +69,8 @@ class PytestUnusedFixturesPlugin:
             for x in itertools.chain(*session._fixturemanager._arg2fixturedefs.values())
             # if fixture is not in available fixtures, it won't be marked as unused
             if not hasattr(x.func, "ignore_unused_fixture")
+            # baseid = '' when fixture comes from other plugins
+            and getattr(x, "baseid", None) != ""
         }
 
     def _write_fixtures(self, config: Config, terminalreporter: TerminalReporter, fixtures: set[FixtureInfo]):
@@ -105,20 +109,49 @@ class PytestUnusedFixturesPlugin:
     ) -> NoReturn:
         """Add the fixture time report."""
         fullwidth = config.get_terminal_writer().fullwidth
-
-        # do a simple set operation to get the unused fixtures
-        unused_fixtures = self.available_fixtures - self.used_fixtures
-
-        # ignore unused fixtures from ignored paths
-        fixture: FixtureInfo
-        non_ignored_unused_fixtures = []
-        for fixture in unused_fixtures:
-            if any(fixture.location_path.is_relative_to(x) or fixture.location_path == x for x in self.ignore_paths):
-                continue
-            non_ignored_unused_fixtures.append(fixture)
-        unused_fixtures = non_ignored_unused_fixtures
+        unused_fixtures = self._get_unused_fixtures()
 
         # print fixtures
         if unused_fixtures:
             terminalreporter.write_sep(sep="=", title="UNUSED FIXTURES", fullwidth=fullwidth)
             self._write_fixtures(config, terminalreporter, unused_fixtures)
+
+    def _get_unused_fixtures(self) -> set[FixtureInfo]:
+        # do a simple set operation to get the unused fixtures
+        unused_fixtures = self.available_fixtures - self.used_fixtures
+
+        # ignore unused fixtures from ignored paths
+        fixture: FixtureInfo
+        non_ignored_unused_fixtures = set()
+        for fixture in unused_fixtures:
+            if any(fixture.location_path.is_relative_to(x) or fixture.location_path == x for x in self.ignore_paths):
+                continue
+            fixtures_in_context = [
+                fixture.location_path.is_relative_to(x) for x in [Path(i).resolve() for i in self.context]
+            ]
+            if fixtures_in_context and not any(fixtures_in_context):
+                continue
+            non_ignored_unused_fixtures.add(fixture)
+
+        return non_ignored_unused_fixtures
+
+    @pytest.hookimpl(hookwrapper=True)
+    def pytest_runtestloop(self, session: Session):
+        yield
+
+        if not session.config.getoption("--unused-fixtures-fail-when-present", False):
+            return
+
+        unused_fixtures = self._get_unused_fixtures()
+        has_unused = unused_fixtures != set()
+
+        if has_unused:
+            message = f"Unused fixtures failure: total of {len(unused_fixtures)} unused fixtures"
+            session.config.pluginmanager.getplugin("terminalreporter").write(
+                f"\nERROR: {message}\n", red=True, bold=True
+            )
+            self._shouldfail = True
+
+    def pytest_sessionfinish(self, session: Session, exitstatus: int | ExitCode) -> None:
+        if self._shouldfail:
+            session.exitstatus = pytest.ExitCode.TESTS_FAILED
