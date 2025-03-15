@@ -19,17 +19,13 @@ jobs:
       with:
         tox_env: ${{ matrix.tox_env }}
     strategy:
+      fail-fast: false
       matrix:
         tox_env:
-         - py39-pytest7
          - py39-pytest8
-         - py310-pytest7
          - py310-pytest8
-         - py311-pytest7
          - py311-pytest8
-         - py312-pytest7
          - py312-pytest8
-         - py313-pytest7
          - py313-pytest8
 
     # Use GitHub's Linux Docker host
