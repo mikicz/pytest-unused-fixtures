@@ -17,6 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Framework :: Pytest",
 ]
 include = ["LICENSE"]
@@ -31,7 +32,7 @@ python = "^3.9"
 pytest = ">7.3.2"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.7.0"
+ruff = "^0.11.0"
 pytest-xdist = "^3.3.1"
 
 [build-system]
@@ -39,7 +40,6 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
-
 line-length = 120
 target-version = "py310"
 
@@ -77,7 +77,6 @@ select = [
 # Never enforce...
 ignore = [
     "E501",   # line length violations
-    "PT004",  # missing-fixture-name-underscore
     "SIM108", # use-ternary-operator
     "RET505", # superfluous-else-return
     "RET506", # superfluous-else-raise
