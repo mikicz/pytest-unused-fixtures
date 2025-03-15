@@ -80,6 +80,21 @@ Many thanks to
 
 ## Changelog
 
+### 0.2.0 (Mar 15, 2025)
+
+* Test only on Pytest 8
+* Add `--unused-fixtures-context`
+* Add `--unused-fixtures-fail-when-present`
+* Support Python 3.13
+
+### 0.1.5 (Apr 8, 2024)
+
+* Support Pytest 8
+
+### 0.1.4 (Aug 8, 2023)
+
+* Bump versions, add CI
+
 ### 0.1.3 (Jun 30, 2023)
 
 * Print line number
