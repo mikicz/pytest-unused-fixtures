@@ -14,6 +14,8 @@ if TYPE_CHECKING:
     from _pytest.main import Session
     from _pytest.terminal import TerminalReporter
 
+IGNORE_ATTR_NAME = "_ignore_unused_fixture"
+
 
 @dataclasses.dataclass(frozen=True, eq=True)
 class FixtureInfo:
@@ -65,13 +67,17 @@ class PytestUnusedFixturesPlugin:
 
     def pytest_collection_finish(self, session: Session) -> None:
         self.available_fixtures = {
-            self.get_fixture_info(x)
-            for x in itertools.chain(*session._fixturemanager._arg2fixturedefs.values())
-            # if fixture is not in available fixtures, it won't be marked as unused
-            if not hasattr(x.func, "ignore_unused_fixture")
-            # baseid = '' when fixture comes from other plugins
-            and getattr(x, "baseid", None) != ""
+            self.get_fixture_info(fixturedef)
+            for fixturedef in itertools.chain(*session._fixturemanager._arg2fixturedefs.values())
+            if (
+                # if fixture is not in available fixtures, it won't be marked as unused
+                not hasattr(fixturedef, IGNORE_ATTR_NAME)
+                and not hasattr(fixturedef.func, IGNORE_ATTR_NAME)
+                # baseid = '' when fixture comes from other plugins
+                and getattr(fixturedef, "baseid", None) != ""
+            )
         }
+        print(list(itertools.chain(*session._fixturemanager._arg2fixturedefs.values())))
 
     def _write_fixtures(self, config: Config, terminalreporter: TerminalReporter, fixtures: set[FixtureInfo]):
         verbose = config.getvalue("verbose")
