@@ -19,6 +19,11 @@ def sample_testfile(pytester):
             def fixture_b(self):
                 return None
 
+            @ignore_unused_fixture
+            @pytest.fixture
+            def fixture_b_prime(self):
+                return None
+
             @pytest.fixture
             def fixture_c(self):
                 return None
@@ -44,7 +49,7 @@ def test_default(pytester, sample_testfile):
         [
             "*UNUSED FIXTURES*",
             "*fixtures defined from test_default*",
-            "*fixture_c -- test_default.py:14*",
+            "*fixture_c -- test_default.py:19*",
         ],
         consecutive=True,
     )
