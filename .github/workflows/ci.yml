@@ -12,7 +12,7 @@ jobs:
   tox_test:
     name: Tox tests
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Run Tox tests
       id: test
       uses: fedora-python/tox-github-action@main
@@ -34,6 +34,6 @@ jobs:
     name: Pre-commit
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
       - uses: pre-commit/action@v3.0.1
