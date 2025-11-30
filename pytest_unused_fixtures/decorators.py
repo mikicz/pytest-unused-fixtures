@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, TypeVar
 
 from .plugin import IGNORE_ATTR_NAME
 
 if TYPE_CHECKING:
-    from _pytest.fixtures import FixtureFunction, FixtureFunctionDefinition
+    from _pytest.fixtures import FixtureFunctionDefinition
 
-    Fixture = TypeVar("Fixture", bound=FixtureFunctionDefinition)
+    FuncOrFixture = TypeVar("FuncOrFixture", Callable[..., Any], FixtureFunctionDefinition)
 
 
-def ignore_unused_fixture(func_or_fixture: FixtureFunction | Fixture) -> FixtureFunction | Fixture:
+def ignore_unused_fixture(func_or_fixture: FuncOrFixture) -> FuncOrFixture:
     if hasattr(func_or_fixture, "_get_wrapped_function"):
         func = func_or_fixture._get_wrapped_function()
     else:
