@@ -77,7 +77,6 @@ class PytestUnusedFixturesPlugin:
                 and getattr(fixturedef, "baseid", None) != ""
             )
         }
-        print(list(itertools.chain(*session._fixturemanager._arg2fixturedefs.values())))
 
     def _write_fixtures(self, config: Config, terminalreporter: TerminalReporter, fixtures: set[FixtureInfo]):
         verbose = config.getvalue("verbose")
