@@ -93,6 +93,15 @@ Many thanks to
 
 ## Changelog
 
+### 0.3.0 (Dec 2, 2025)
+
+* Allow decorating fixtures with ignore_unused_fixture (#24)
+
+### 0.2.1 (Nov 10, 2025)
+
+* Support Python 3.14
+* Drop support for 3.9
+
 ### 0.2.0 (Mar 15, 2025)
 
 * Test only on Pytest 8
