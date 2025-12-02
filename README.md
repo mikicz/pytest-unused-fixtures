@@ -61,6 +61,19 @@ def ignored_fixture():
     pass
 ```
 
+Alternatively, if you prefer module imports:
+
+```python
+import pytest
+import pytest_unused_fixtures
+
+@pytest.fixture
+@pytest_unused_fixtures.ignore
+def ignored_fixture():
+    pass
+```
+
+
 ## Development
 
 [Poetry](https://python-poetry.org/) (dependencies) and [pre-commit](https://pre-commit.com/) (coding standards) are required for development. There are some tests, obviously written in [pytest](https://pytest.org/).
