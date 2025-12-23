@@ -93,6 +93,10 @@ Many thanks to
 
 ## Changelog
 
+### 0.3.1 (Dec 23, 2025)
+
+* Default available_fixtures to an empty set (#28)
+
 ### 0.3.0 (Dec 2, 2025)
 
 * Allow decorating fixtures with ignore_unused_fixture (#24)
