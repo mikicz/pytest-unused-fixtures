@@ -45,7 +45,7 @@ class PytestUnusedFixturesPlugin:
     def __init__(self, ignore_paths: list[str | Path] | None = None, context: list[str | Path] | None = None):
         self.ignore_paths: list[Path] = [Path(x).resolve() for x in (ignore_paths or [])]
         self.used_fixtures: set[FixtureInfo] = set()
-        self.available_fixtures: None | set[FixtureInfo] = None
+        self.available_fixtures: set[FixtureInfo] = set()
         self.curdir = Path().cwd()
         self.context = context or []
         self._shouldfail = False
