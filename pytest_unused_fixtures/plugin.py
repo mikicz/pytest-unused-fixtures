@@ -9,8 +9,10 @@ import pytest
 from _pytest.compat import getlocation
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from _pytest.config import Config, ExitCode
-    from _pytest.fixtures import FixtureDef, SubRequest
+    from _pytest.fixtures import FixtureDef, FixtureManager, SubRequest
     from _pytest.main import Session
     from _pytest.terminal import TerminalReporter
 
@@ -41,6 +43,17 @@ class FixtureInfo:
             return self.location_path
 
 
+def _all_fixturedefs(fixturemanager: FixtureManager) -> Iterable[FixtureDef]:
+    """Compatibility wrapper returning every FixtureDef the manager knows.
+
+    pytest>=9.2 drops the old interface that requires chaining, and instead
+    exposes an iterator to walk the fixture definitions.
+    """
+    if not hasattr(fixturemanager, "_get_all_fixture_defs"):  # pytest<9.2
+        return itertools.chain.from_iterable(fixturemanager._arg2fixturedefs.values())
+    return fixturemanager._get_all_fixture_defs()
+
+
 class PytestUnusedFixturesPlugin:
     def __init__(self, ignore_paths: list[str | Path] | None = None, context: list[str | Path] | None = None):
         self.ignore_paths: list[Path] = [Path(x).resolve() for x in (ignore_paths or [])]
@@ -68,7 +81,7 @@ class PytestUnusedFixturesPlugin:
     def pytest_collection_finish(self, session: Session) -> None:
         self.available_fixtures = {
             self.get_fixture_info(fixturedef)
-            for fixturedef in itertools.chain(*session._fixturemanager._arg2fixturedefs.values())
+            for fixturedef in _all_fixturedefs(session._fixturemanager)
             if (
                 # if fixture is not in available fixtures, it won't be marked as unused
                 not hasattr(fixturedef, IGNORE_ATTR_NAME)
