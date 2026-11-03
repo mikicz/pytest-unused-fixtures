@@ -93,6 +93,10 @@ Many thanks to
 
 ## Changelog
 
+### Unreleased
+
+* Support pytest 9.2, which keys its fixture registry by node
+
 ### 0.3.1 (Dec 23, 2025)
 
 * Default available_fixtures to an empty set (#28)

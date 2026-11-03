@@ -27,6 +27,11 @@ jobs:
          - py312-pytest8
          - py313-pytest8
          - py314-pytest8
+         - py310-pytest9
+         - py311-pytest9
+         - py312-pytest9
+         - py313-pytest9
+         - py314-pytest9
 
     # Use GitHub's Linux Docker host
     runs-on: ubuntu-latest
