@@ -95,9 +95,11 @@ Many thanks to
 
 ## Changelog
 
-### Unreleased
+### 0.3.2 (Nov 18, 2025)
 
 * Support pytest 9.2, which keys its fixture registry by node
+* Support Python 3.15
+* Drop support for Python 3.10
 
 ### 0.3.1 (Dec 23, 2025)
 
