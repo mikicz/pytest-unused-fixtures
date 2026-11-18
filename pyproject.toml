@@ -13,11 +13,11 @@ classifiers = [
     "Topic :: Software Development :: Testing",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Framework :: Pytest",
 ]
 include = ["LICENSE"]
@@ -32,7 +32,7 @@ python = "^3.9"
 pytest = ">7.3.2"
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.11.0"
+ruff = ">=0.17.5"
 pytest-xdist = "^3.3.1"
 
 [build-system]
@@ -41,7 +41,7 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.ruff]
 line-length = 120
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 select = [

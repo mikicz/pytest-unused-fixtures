@@ -55,6 +55,7 @@ Sometimes there will be fixture which are unused on purpose, for example when us
 import pytest
 from pytest_unused_fixtures import ignore_unused_fixture
 
+
 @pytest.fixture
 @ignore_unused_fixture
 def ignored_fixture():
@@ -66,6 +67,7 @@ Alternatively, if you prefer module imports:
 ```python
 import pytest
 import pytest_unused_fixtures
+
 
 @pytest.fixture
 @pytest_unused_fixtures.ignore
